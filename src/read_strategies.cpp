@@ -1,4 +1,7 @@
-#include "single_value.h"
+#include "single_value_cppstyle.h"
+#include "single_value_cstyle.h"
+#include "single_value_cstyle_fadvise.h"
+#include "single_value_cstyle_buffered.h"
 
 #include <iostream>
 #include <fstream>
@@ -7,25 +10,24 @@
 #include <string>
 #include <chrono>
 
+typedef float testtype;
+
 int main(void) {
   size_t numFiles = 256;
 
-  std::vector<std::ifstream*> inputFiles(numFiles);
+  std::vector<std::string> inputFilePaths(numFiles);
 
   for(size_t i = 0; i < numFiles; i++) {
     std::stringstream sstream;
     sstream << "inputfile_" << i;
-    inputFiles[i] =
-      new std::ifstream(sstream.str(), std::ios::binary | std::ios::in);
-    
-    if(!inputFiles[i]->good()) {
-      std::cerr << "Could not open file: " << sstream.str() << std::endl;
-      exit(1);
-    }
+    inputFilePaths[i] = sstream.str();  
   }
  
   auto start = std::chrono::steady_clock::now(); 
-  single_value<double>(inputFiles);
+//single_value_cppstyle<testtype>(inputFilePaths);
+//single_value_cstyle<testtype>(inputFilePaths);
+//single_value_cstyle_fadvise<testtype>(inputFilePaths);
+single_value_cstyle_buffered<testtype>(inputFilePaths, 4 * 1024);
   auto end = std::chrono::steady_clock::now();  
   auto diff = end - start;
   std::cout
