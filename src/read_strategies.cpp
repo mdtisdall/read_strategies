@@ -3,6 +3,7 @@
 #include "single_value_cstyle.h"
 #include "single_value_cstyle_fadvise.h"
 #include "buffered_cstyle.h"
+#include "buffered_cstyle_fadvise.h"
 
 #include <tclap/CmdLine.h>
 
@@ -84,10 +85,12 @@ void process_data(std::vector<std::string> inputFilePaths) {
 
 int main(int argc, char** argv) {
   size_t numFiles = 256;
+  std::vector<std::string> inputFilePaths(numFiles);
 
   bool doCStyle = false;
   bool doCStyleFadvise = false;
   bool doCStyleBuffered = false;
+  bool doCStyleBufferedFadvise = false;
   bool doCPPStyle = false;
 
 
@@ -97,18 +100,21 @@ int main(int argc, char** argv) {
       ' ', "0.0.1");
 
 
-		TCLAP::ValueArg<std::string> testFilePath("i", "input-path", "path containing input files to read", true, "./", "file path ending in /", cmd);
+		TCLAP::ValueArg<std::string> testFilePathArg("i", "input-path", "path containing input files to read", true, "./", "file path ending in /", cmd);
 		TCLAP::SwitchArg cstyleArg("", "c-style", "use read(2)", false);
 		TCLAP::SwitchArg cstylefadviseArg("", "c-style-fadvise",
       "use read(2) with fadvise", false);
 		TCLAP::SwitchArg cstylebufferedArg("", "c-style-buffered",
       "use read(2) with manual buffering", false);
+		TCLAP::SwitchArg cstylebufferedfadviseArg("", "c-style-buffered-fadvise",
+      "use read(2) with manual buffering and fadvise", false);
 		TCLAP::SwitchArg cppstyleArg("", "cpp-style", "use ifstream.read()", false);
    
     std::vector<TCLAP::Arg*> xorArgList;
     xorArgList.push_back(&cstyleArg);
     xorArgList.push_back(&cstylefadviseArg);
     xorArgList.push_back(&cstylebufferedArg);
+    xorArgList.push_back(&cstylebufferedfadviseArg);
     xorArgList.push_back(&cppstyleArg);
     
     cmd.xorAdd(xorArgList);
@@ -117,20 +123,25 @@ int main(int argc, char** argv) {
     doCStyle = cstyleArg.getValue();
     doCStyleFadvise = cstylefadviseArg.getValue();
     doCStyleBuffered = cstylebufferedArg.getValue();
+    doCStyleBufferedFadvise = cstylebufferedfadviseArg.getValue();
     doCPPStyle = cppstyleArg.getValue();
 
+    std::string testFilePath = testFilePathArg.getValue(); 
+    if(testFilePath.back() != '/') {
+      testFilePath = testFilePath + std::string("/"); 
+    }
+
+    for(size_t i = 0; i < numFiles; i++) {
+      std::stringstream sstream;
+      sstream << "inputfile_" << i;
+      inputFilePaths[i] = testFilePath + sstream.str();  
+    }
 	} 	catch (TCLAP::ArgException &e) {
 		std::cerr << "Error: " << e.error() << " for arg " << e.argId() << std::endl;
 		exit(1);
 	}
 
-  std::vector<std::string> inputFilePaths(numFiles);
 
-  for(size_t i = 0; i < numFiles; i++) {
-    std::stringstream sstream;
-    sstream << "inputfile_" << i;
-    inputFilePaths[i] = sstream.str();  
-  }
   
   if(doCStyle) {
     process_data<T, single_value_cstyle<T> >(inputFilePaths);
@@ -140,6 +151,9 @@ int main(int argc, char** argv) {
   }
   if(doCStyleBuffered) {
     process_data<T, buffered_cstyle<T> >(inputFilePaths);
+  }
+  if(doCStyleBufferedFadvise) {
+    process_data<T, buffered_cstyle_fadvise<T> >(inputFilePaths);
   }
   if(doCPPStyle) {
     process_data<T, single_value_cppstyle<T> >(inputFilePaths);
