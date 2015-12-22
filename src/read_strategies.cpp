@@ -4,6 +4,7 @@
 #include "single_value_cstyle_fadvise.h"
 #include "buffered_cstyle.h"
 #include "buffered_cstyle_fadvise.h"
+#include "threaded_double_buffered_cstyle.h"
 
 #include <tclap/CmdLine.h>
 
@@ -91,6 +92,7 @@ int main(int argc, char** argv) {
   bool doCStyleFadvise = false;
   bool doCStyleBuffered = false;
   bool doCStyleBufferedFadvise = false;
+  bool doCStyleThreadedBuffered = false;
   bool doCPPStyle = false;
 
 
@@ -108,6 +110,8 @@ int main(int argc, char** argv) {
       "use read(2) with manual buffering", false);
 		TCLAP::SwitchArg cstylebufferedfadviseArg("", "c-style-buffered-fadvise",
       "use read(2) with manual buffering and fadvise", false);
+		TCLAP::SwitchArg cstylethreadedbufferedArg("", "c-style-threaded-buffered",
+      "use read(2) with threaded double buffering", false);
 		TCLAP::SwitchArg cppstyleArg("", "cpp-style", "use ifstream.read()", false);
    
     std::vector<TCLAP::Arg*> xorArgList;
@@ -115,6 +119,7 @@ int main(int argc, char** argv) {
     xorArgList.push_back(&cstylefadviseArg);
     xorArgList.push_back(&cstylebufferedArg);
     xorArgList.push_back(&cstylebufferedfadviseArg);
+    xorArgList.push_back(&cstylethreadedbufferedArg);
     xorArgList.push_back(&cppstyleArg);
     
     cmd.xorAdd(xorArgList);
@@ -124,6 +129,7 @@ int main(int argc, char** argv) {
     doCStyleFadvise = cstylefadviseArg.getValue();
     doCStyleBuffered = cstylebufferedArg.getValue();
     doCStyleBufferedFadvise = cstylebufferedfadviseArg.getValue();
+    doCStyleThreadedBuffered = cstylethreadedbufferedArg.getValue();
     doCPPStyle = cppstyleArg.getValue();
 
     std::string testFilePath = testFilePathArg.getValue(); 
@@ -154,6 +160,9 @@ int main(int argc, char** argv) {
   }
   if(doCStyleBufferedFadvise) {
     process_data<T, buffered_cstyle_fadvise<T> >(inputFilePaths);
+  }
+  if(doCStyleThreadedBuffered) {
+    process_data<T, threaded_double_buffered_cstyle<T> >(inputFilePaths);
   }
   if(doCPPStyle) {
     process_data<T, single_value_cppstyle<T> >(inputFilePaths);
